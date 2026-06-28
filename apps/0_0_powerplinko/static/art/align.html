@@ -20,6 +20,7 @@
   .wheel.spin { transform-box: view-box; transform-origin: var(--ox) var(--oy); animation: spin 6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .orb { filter: drop-shadow(0 0 8px rgba(255,140,30,.9)); }
+  .guide { stroke-dasharray:7 7; stroke-width:1.5; opacity:.55; }
   .blabel-bg { fill:#0a0d12; opacity:.72; }
   .blabel { fill:#ffe9a8; font-weight:800; text-anchor:middle; }
   .section { fill:#8a93a6; font-size:14px; font-weight:800; letter-spacing:.08em; }
@@ -37,10 +38,13 @@
       <image href="./bg.png" x="0" y="0" width="1372" height="784" />
       <image id="wheel" href="./rotor.png" />
       <image id="buckets" href="./buckets.png" />
+      <g id="fbguides"></g>
       <image id="orb" class="orb" href="./orb.png" />
       <g id="coefs"></g>
       <text id="section" class="section"></text>
       <g id="modes"></g>
+      <g id="recent"></g>
+      <g id="muteicon"></g>
     </svg>
   </div>
 
@@ -50,6 +54,15 @@
     <div class="row"><span>y</span><input type="range" id="wy_r" min="0" max="700" /><input type="number" id="wy_n" /></div>
     <div class="row"><span>size</span><input type="range" id="ws_r" min="120" max="500" /><input type="number" id="ws_n" /></div>
     <label class="chk"><input type="checkbox" id="spin" checked /> spin the wheel</label>
+
+    <h2>Fireball</h2>
+    <div class="row"><span>start x</span><input type="range" id="fx_r" min="0" max="1372" /><input type="number" id="fx_n" /></div>
+    <div class="row"><span>start y</span><input type="range" id="fy_r" min="0" max="784" /><input type="number" id="fy_n" /></div>
+    <div class="row"><span>size (r)</span><input type="range" id="fr_r" min="10" max="60" /><input type="number" id="fr_n" /></div>
+    <div class="row"><span>launch x</span><input type="range" id="flx_r" min="0" max="1372" /><input type="number" id="flx_n" /></div>
+    <div class="row"><span>launch y</span><input type="range" id="fly_r" min="0" max="784" /><input type="number" id="fly_n" /></div>
+    <div class="row"><span>track y</span><input type="range" id="ftk_r" min="400" max="740" /><input type="number" id="ftk_n" /></div>
+    <div class="row"><span>land y</span><input type="range" id="fld_r" min="400" max="784" /><input type="number" id="fld_n" /></div>
 
     <h2>Buckets image</h2>
     <div class="row"><span>x</span><input type="range" id="bx_r" min="0" max="900" /><input type="number" id="bx_n" /></div>
@@ -64,6 +77,10 @@
     <div class="row"><span>pill h</span><input type="range" id="cph_r" min="16" max="48" /><input type="number" id="cph_n" /></div>
     <div class="row"><span>font</span><input type="range" id="cfs_r" min="10" max="26" /><input type="number" id="cfs_n" /></div>
 
+    <h2>Recent plays header</h2>
+    <div class="row"><span>x</span><input type="range" id="rpx_r" min="900" max="1340" /><input type="number" id="rpx_n" /></div>
+    <div class="row"><span>y</span><input type="range" id="rpy_r" min="100" max="700" /><input type="number" id="rpy_n" /></div>
+
     <h2>Game-mode list (risk)</h2>
     <div class="row"><span>x</span><input type="range" id="mx_r" min="900" max="1340" /><input type="number" id="mx_n" /></div>
     <div class="row"><span>header y</span><input type="range" id="msy_r" min="120" max="740" /><input type="number" id="msy_n" /></div>
@@ -73,6 +90,10 @@
     <div class="row"><span>gap</span><input type="range" id="mg_r" min="0" max="40" /><input type="number" id="mg_n" /></div>
     <div class="row"><span>label font</span><input type="range" id="mlf_r" min="10" max="30" /><input type="number" id="mlf_n" /></div>
     <div class="row"><span>hint font</span><input type="range" id="mhf_r" min="8" max="24" /><input type="number" id="mhf_n" /></div>
+
+    <h2>Mute icon (speaker)</h2>
+    <div class="row"><span>x</span><input type="range" id="mutx_r" min="0" max="400" /><input type="number" id="mutx_n" /></div>
+    <div class="row"><span>y</span><input type="range" id="muty_r" min="600" max="784" /><input type="number" id="muty_n" /></div>
 
     <div class="out" id="out"></div>
     <div class="hint">Numbers map 1:1 to Game.svelte (viewBox 1372×784). Tell me the values, or screenshot this.</div>
@@ -88,9 +109,11 @@
   // defaults = current Game.svelte values
   const state = {
     wx:87, wy:223, ws:329, spin:true,
+    fx:638, fy:173, fr:26, flx:249, fly:387, ftk:556, fld:580,
+    rpx:1128, rpy:146, mutx:48, muty:716,
     bx:340, by:536, bw:715, bh:151,
     cy:655, cpy:636, cpw:53, cph:28, cfs:15,
-    mx:1128, msy:620, my:637, mw:202, mh:34, mg:11, mlf:14, mhf:13,
+    mx:1128, msy:609, my:637, mw:202, mh:34, mg:11, mlf:14, mhf:13,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -108,7 +131,19 @@
     // buckets image
     buckets.setAttribute('x', state.bx); buckets.setAttribute('y', state.by);
     buckets.setAttribute('width', state.bw); buckets.setAttribute('height', state.bh);
-    orb.style.display = 'none';
+
+    // fireball start + flight guide lines
+    orb.style.display = '';
+    orb.setAttribute('x', state.fx - state.fr); orb.setAttribute('y', state.fy - state.fr);
+    orb.setAttribute('width', state.fr * 2); orb.setAttribute('height', state.fr * 2);
+    // launch is a POINT (crosshair); track/land are y-levels (x is set per-bucket)
+    const lpx = state.flx, lpy = state.fly;
+    $('fbguides').innerHTML =
+      `<line class="guide" x1="0" x2="1372" y1="${state.ftk}" y2="${state.ftk}" stroke="#f5d042"/>` +
+      `<line class="guide" x1="0" x2="1372" y1="${state.fld}" y2="${state.fld}" stroke="#9fe0a0"/>` +
+      `<circle cx="${lpx}" cy="${lpy}" r="9" fill="none" stroke="#5ad1ff" stroke-width="2"/>` +
+      `<line x1="${lpx - 16}" x2="${lpx + 16}" y1="${lpy}" y2="${lpy}" stroke="#5ad1ff" stroke-width="1.5"/>` +
+      `<line x1="${lpx}" x2="${lpx}" y1="${lpy - 16}" y2="${lpy + 16}" stroke="#5ad1ff" stroke-width="1.5"/>`;
 
     // coefficient labels (pills + text), 9 across the bucket strip
     let g = '';
@@ -133,14 +168,32 @@
     }
     $('modes').innerHTML = m;
 
+    // recent-plays header + sample rows (rows are fixed in Game.svelte: x=1148, y=194+i*41)
+    let rp = `<text class="section" x="${state.rpx}" y="${state.rpy}">RECENT PLAYS</text>`;
+    const samples = ['1.5x','0x','3x','25x','0.5x'];
+    for (let i = 0; i < samples.length; i++) {
+      const ry = 194 + i * 41;
+      rp += `<text x="1148" y="${ry}" style="fill:#c7cedb;font-size:20px;font-weight:800">×${samples[i]}</text>`;
+      rp += `<text x="1325" y="${ry}" text-anchor="end" style="fill:#6b7486;font-size:18px;font-weight:800">+$0.50</text>`;
+    }
+    $('recent').innerHTML = rp;
+
+    // mute (speaker) icon — bottom-left, scale fixed at 1.5 (matches Game.svelte)
+    $('muteicon').setAttribute('transform', `translate(${state.mutx} ${state.muty}) scale(1.5)`);
+    $('muteicon').innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="#c7cedb"/>';
+
     out.textContent =
       `WHEEL  image x="${state.wx}" y="${state.wy}" w/h="${state.ws}"\n` +
       `  WHEEL_CX=${Math.round(ox)} WHEEL_CY=${Math.round(oy)}  transform-origin:${ox}px ${oy}px\n\n` +
+      `FIREBALL  START_X=${state.fx} START_Y=${state.fy} BALL_R=${state.fr}\n` +
+      `  LAUNCH_X=${state.flx} LAUNCH_Y=${state.fly} TRACK_Y=${state.ftk} LAND_Y=${state.fld}\n\n` +
       `BUCKETS image x="${state.bx}" y="${state.by}" w="${state.bw}" h="${state.bh}"\n` +
       `  BK_X0=${state.bx} BK_W=${state.bw}\n\n` +
       `COEF LABELS  (bandX(b)=${state.bx}+((b+0.5)/9)*${state.bw})\n` +
       `  rect x={bandX(b) - ${state.cpw/2}} y="${state.cpy}" width="${state.cpw}" height="${state.cph}"\n` +
       `  text x={bandX(b)} y="${state.cy}"  font-size:${state.cfs}px\n\n` +
+      `RECENT  header x="${state.rpx}" y="${state.rpy}"  (list fixed: x=1148, y=194+i*41)\n\n` +
+      `MUTE  icon x="${state.mutx}" y="${state.muty}"  scale 1.5  -> MUTE_X / MUTE_Y\n\n` +
       `MODES  header: x="${state.mx}" y="${state.msy}"\n` +
       `  rect x="${state.mx}" y={${state.my} + i*${pitch}} width="${state.mw}" height="${state.mh}"\n` +
       `  label x="${state.mx + 20}" y={rowY + ${state.mh/2 + 7}}  font:${state.mlf}px\n` +
@@ -154,7 +207,7 @@
     r.addEventListener('input', e => upd(e.target.value));
     n.addEventListener('input', e => upd(e.target.value));
   }
-  ['wx','wy','ws','bx','by','bw','bh','cy','cpy','cpw','cph','cfs','mx','msy','my','mw','mh','mg','mlf','mhf']
+  ['wx','wy','ws','fx','fy','fr','flx','fly','ftk','fld','rpx','rpy','mutx','muty','bx','by','bw','bh','cy','cpy','cpw','cph','cfs','mx','msy','my','mw','mh','mg','mlf','mhf']
     .forEach(k => bind(k, k+'_r', k+'_n'));
   $('spin').addEventListener('change', e => { state.spin = e.target.checked; render(); });
   render();

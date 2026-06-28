@@ -9,6 +9,7 @@ import type { BetType } from 'rgs-requests';
 type BookEventWheel = {
 	index: number;
 	type: 'wheel';
+	mode?: string; // risk table that produced this book: 'low' | 'medium' | 'high' (FE ignores it; mocks omit it)
 	band: number;
 	totalBands: number;
 	distance: number;

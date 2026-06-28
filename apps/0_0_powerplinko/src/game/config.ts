@@ -1,8 +1,12 @@
+// INERT scaffolding from the number-picker template. NOT read at runtime and NOT
+// published — kept only because src/game/types.ts derives dead template types from its
+// `symbols`/`betModes`/`paddingReels` shape. The real game identity lives in package.json
+// ("name"), the math configs, and the launch env. Identity scalars corrected for hygiene.
 export default {
 	providerName: 'sample_provider',
-	gameName: 'sample_lines',
-	gameID: '0_0_ways',
-	rtp: 0.97,
+	gameName: 'power_plinko',
+	gameID: '0_0_powerplinko',
+	rtp: 0.96,
 	numReels: 5,
 	numRows: [3, 3, 3, 3, 3],
 	betModes: {
