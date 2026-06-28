@@ -1,0 +1,64 @@
+/* @import '@fontsource/poppins'; */
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+:root {
+	--txt-1: hsl(220 10% 98%);
+	--bg-1: hsl(220 25% 7%);
+	--bg-2: hsl(220 20% 16%);
+	--accent: hsl(45 90% 60%);
+}
+
+html,
+body {
+	height: 100%;
+}
+
+body {
+	display: grid;
+	place-content: center;
+	padding: 2rem;
+	font-family: 'Poppins', sans-serif;
+	color: var(--txt-1);
+	background-color: var(--bg-1);
+}
+
+h1 {
+	font-size: 2.75rem;
+	text-align: center;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+button {
+	padding: 0.9rem 2rem;
+	font-size: 1.25rem;
+	font-weight: 900;
+	color: inherit;
+	background: none;
+	border-radius: 8px;
+	border: none;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+.play-style {
+	background-color: var(--accent);
+	color: #1a1300;
+	border: 2px solid #ffe9a8;
+	transition:
+		transform 120ms ease,
+		filter 120ms ease;
+}
+.play-style:hover:not(:disabled) {
+	filter: brightness(1.08);
+	transform: translateY(-1px);
+}
+.play-style:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Power Plinko — alignment tool</title>
+<style>
+  body { margin:0; background:#0a0d12; color:#d7c8a8; font-family:system-ui,Segoe UI,sans-serif; }
+  .wrap { display:flex; gap:16px; padding:14px; align-items:flex-start; flex-wrap:wrap; }
+  .stage { flex:1 1 720px; min-width:360px; }
+  svg { width:100%; height:auto; display:block; background:#000; border-radius:8px; }
+  .panel { width:320px; background:#12161e; border:1px solid #333; border-radius:10px; padding:12px; }
+  h2 { margin:14px 0 6px; font-size:14px; color:#f5d042; letter-spacing:.04em; }
+  h2:first-child { margin-top:0; }
+  .row { display:grid; grid-template-columns:62px 1fr 56px; gap:8px; align-items:center; margin:5px 0; font-size:12px; }
+  input[type=range] { width:100%; }
+  input[type=number] { width:54px; background:#0a0d12; color:#fff; border:1px solid #444; border-radius:4px; padding:2px 4px; }
+  .out { margin-top:12px; padding:10px; background:#0a0d12; border:1px solid #333; border-radius:6px; font-family:Consolas,monospace; font-size:11.5px; white-space:pre-wrap; color:#9fe0a0; }
+  label.chk { display:flex; align-items:center; gap:6px; margin:8px 0; font-size:13px; }
+  .hint { font-size:11px; opacity:.6; margin-top:8px; }
+  .wheel.spin { transform-box: view-box; transform-origin: var(--ox) var(--oy); animation: spin 6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .orb { filter: drop-shadow(0 0 8px rgba(255,140,30,.9)); }
+  .blabel-bg { fill:#0a0d12; opacity:.72; }
+  .blabel { fill:#ffe9a8; font-weight:800; text-anchor:middle; }
+  .section { fill:#8a93a6; font-size:14px; font-weight:800; letter-spacing:.08em; }
+  .mode { fill:rgba(255,255,255,.03); stroke:#3a4252; stroke-width:1.5; }
+  .mode.sel { fill:rgba(245,208,66,.14); stroke:#f5d042; stroke-width:2; }
+  .mode-label { fill:#c7cedb; font-size:18px; font-weight:800; }
+  .mode-label.sel { fill:#ffd34d; }
+  .mode-hint { fill:#6b7486; font-size:14px; font-weight:700; text-anchor:end; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <svg id="svg" viewBox="0 0 1372 784">
+      <image href="./bg.png" x="0" y="0" width="1372" height="784" />
+      <image id="wheel" href="./rotor.png" />
+      <image id="buckets" href="./buckets.png" />
+      <image id="orb" class="orb" href="./orb.png" />
+      <g id="coefs"></g>
+      <text id="section" class="section"></text>
+      <g id="modes"></g>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <h2>Wheel</h2>
+    <div class="row"><span>x</span><input type="range" id="wx_r" min="0" max="700" /><input type="number" id="wx_n" /></div>
+    <div class="row"><span>y</span><input type="range" id="wy_r" min="0" max="700" /><input type="number" id="wy_n" /></div>
+    <div class="row"><span>size</span><input type="range" id="ws_r" min="120" max="500" /><input type="number" id="ws_n" /></div>
+    <label class="chk"><input type="checkbox" id="spin" checked /> spin the wheel</label>
+
+    <h2>Buckets image</h2>
+    <div class="row"><span>x</span><input type="range" id="bx_r" min="0" max="900" /><input type="number" id="bx_n" /></div>
+    <div class="row"><span>y</span><input type="range" id="by_r" min="300" max="780" /><input type="number" id="by_n" /></div>
+    <div class="row"><span>w</span><input type="range" id="bw_r" min="300" max="1000" /><input type="number" id="bw_n" /></div>
+    <div class="row"><span>h</span><input type="range" id="bh_r" min="60" max="300" /><input type="number" id="bh_n" /></div>
+
+    <h2>Coefficient labels (on buckets)</h2>
+    <div class="row"><span>text y</span><input type="range" id="cy_r" min="540" max="700" /><input type="number" id="cy_n" /></div>
+    <div class="row"><span>pill y</span><input type="range" id="cpy_r" min="540" max="700" /><input type="number" id="cpy_n" /></div>
+    <div class="row"><span>pill w</span><input type="range" id="cpw_r" min="30" max="100" /><input type="number" id="cpw_n" /></div>
+    <div class="row"><span>pill h</span><input type="range" id="cph_r" min="16" max="48" /><input type="number" id="cph_n" /></div>
+    <div class="row"><span>font</span><input type="range" id="cfs_r" min="10" max="26" /><input type="number" id="cfs_n" /></div>
+
+    <h2>Game-mode list (risk)</h2>
+    <div class="row"><span>x</span><input type="range" id="mx_r" min="900" max="1340" /><input type="number" id="mx_n" /></div>
+    <div class="row"><span>header y</span><input type="range" id="msy_r" min="120" max="740" /><input type="number" id="msy_n" /></div>
+    <div class="row"><span>row1 y</span><input type="range" id="my_r" min="140" max="744" /><input type="number" id="my_n" /></div>
+    <div class="row"><span>row w</span><input type="range" id="mw_r" min="120" max="320" /><input type="number" id="mw_n" /></div>
+    <div class="row"><span>row h</span><input type="range" id="mh_r" min="24" max="70" /><input type="number" id="mh_n" /></div>
+    <div class="row"><span>gap</span><input type="range" id="mg_r" min="0" max="40" /><input type="number" id="mg_n" /></div>
+    <div class="row"><span>label font</span><input type="range" id="mlf_r" min="10" max="30" /><input type="number" id="mlf_n" /></div>
+    <div class="row"><span>hint font</span><input type="range" id="mhf_r" min="8" max="24" /><input type="number" id="mhf_n" /></div>
+
+    <div class="out" id="out"></div>
+    <div class="hint">Numbers map 1:1 to Game.svelte (viewBox 1372×784). Tell me the values, or screenshot this.</div>
+  </div>
+</div>
+
+<script>
+  const TOTAL = 9;
+  const COEFS = ['0x','0.5x','1.5x','3x','8x','25x','100x','500x','5000x']; // medium, for placement
+  const MODES = [['Low','max 25x'],['Medium','max 5000x'],['High','max 5000x']];
+  const SEL = 1; // medium highlighted, for preview
+
+  // defaults = current Game.svelte values
+  const state = {
+    wx:87, wy:223, ws:329, spin:true,
+    bx:340, by:536, bw:715, bh:151,
+    cy:655, cpy:636, cpw:53, cph:28, cfs:15,
+    mx:1128, msy:620, my:637, mw:202, mh:34, mg:11, mlf:14, mhf:13,
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const svg = $('svg'), wheel = $('wheel'), buckets = $('buckets'), orb = $('orb');
+  const out = $('out');
+  const bandCx = (b) => state.bx + ((b + 0.5) / TOTAL) * state.bw;
+
+  function render() {
+    // wheel
+    wheel.setAttribute('x', state.wx); wheel.setAttribute('y', state.wy);
+    wheel.setAttribute('width', state.ws); wheel.setAttribute('height', state.ws);
+    const ox = state.wx + state.ws/2, oy = state.wy + state.ws/2;
+    wheel.style.setProperty('--ox', ox + 'px'); wheel.style.setProperty('--oy', oy + 'px');
+    wheel.classList.toggle('spin', state.spin);
+    // buckets image
+    buckets.setAttribute('x', state.bx); buckets.setAttribute('y', state.by);
+    buckets.setAttribute('width', state.bw); buckets.setAttribute('height', state.bh);
+    orb.style.display = 'none';
+
+    // coefficient labels (pills + text), 9 across the bucket strip
+    let g = '';
+    for (let b = 0; b < TOTAL; b++) {
+      const cx = bandCx(b);
+      g += `<rect class="blabel-bg" x="${cx - state.cpw/2}" y="${state.cpy}" width="${state.cpw}" height="${state.cph}" rx="6"/>`;
+      g += `<text class="blabel" x="${cx}" y="${state.cy}" style="font-size:${state.cfs}px">${COEFS[b]}</text>`;
+    }
+    $('coefs').innerHTML = g;
+
+    // risk-mode list
+    const sec = $('section');
+    sec.setAttribute('x', state.mx); sec.setAttribute('y', state.msy); sec.textContent = 'RISK MODE';
+    let m = '';
+    const pitch = state.mh + state.mg;
+    for (let i = 0; i < MODES.length; i++) {
+      const ry = state.my + i * pitch;
+      const sel = i === SEL ? ' sel' : '';
+      m += `<rect class="mode${sel}" x="${state.mx}" y="${ry}" width="${state.mw}" height="${state.mh}" rx="8"/>`;
+      m += `<text class="mode-label${sel}" x="${state.mx + 20}" y="${ry + state.mh/2 + 7}" style="font-size:${state.mlf}px">${MODES[i][0]}</text>`;
+      m += `<text class="mode-hint" x="${state.mx + state.mw - 17}" y="${ry + state.mh/2 + 7}" style="font-size:${state.mhf}px">${MODES[i][1]}</text>`;
+    }
+    $('modes').innerHTML = m;
+
+    out.textContent =
+      `WHEEL  image x="${state.wx}" y="${state.wy}" w/h="${state.ws}"\n` +
+      `  WHEEL_CX=${Math.round(ox)} WHEEL_CY=${Math.round(oy)}  transform-origin:${ox}px ${oy}px\n\n` +
+      `BUCKETS image x="${state.bx}" y="${state.by}" w="${state.bw}" h="${state.bh}"\n` +
+      `  BK_X0=${state.bx} BK_W=${state.bw}\n\n` +
+      `COEF LABELS  (bandX(b)=${state.bx}+((b+0.5)/9)*${state.bw})\n` +
+      `  rect x={bandX(b) - ${state.cpw/2}} y="${state.cpy}" width="${state.cpw}" height="${state.cph}"\n` +
+      `  text x={bandX(b)} y="${state.cy}"  font-size:${state.cfs}px\n\n` +
+      `MODES  header: x="${state.mx}" y="${state.msy}"\n` +
+      `  rect x="${state.mx}" y={${state.my} + i*${pitch}} width="${state.mw}" height="${state.mh}"\n` +
+      `  label x="${state.mx + 20}" y={rowY + ${state.mh/2 + 7}}  font:${state.mlf}px\n` +
+      `  hint  x="${state.mx + state.mw - 17}" y={rowY + ${state.mh/2 + 7}} (anchor end)  font:${state.mhf}px`;
+  }
+
+  function bind(key, rId, nId) {
+    const r = $(rId), n = $(nId);
+    r.value = state[key]; n.value = state[key];
+    const upd = (v) => { state[key] = Math.round(+v); r.value = state[key]; n.value = state[key]; render(); };
+    r.addEventListener('input', e => upd(e.target.value));
+    n.addEventListener('input', e => upd(e.target.value));
+  }
+  ['wx','wy','ws','bx','by','bw','bh','cy','cpy','cpw','cph','cfs','mx','msy','my','mw','mh','mg','mlf','mhf']
+    .forEach(k => bind(k, k+'_r', k+'_n'));
+  $('spin').addEventListener('change', e => { state.spin = e.target.checked; render(); });
+  render();
+</script>
+</body>
+</html>
