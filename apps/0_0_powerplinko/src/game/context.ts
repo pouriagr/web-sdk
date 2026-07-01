@@ -9,9 +9,13 @@ import { stateLayout, stateLayoutDerived } from './stateLayout';
 import { stateApp } from './stateApp';
 
 import { stateGame, stateGameDerived } from './stateGame.svelte';
+import { initBetModes } from './betModes';
 import { i18nDerived } from '../i18n/i18nDerived';
 
 export const setContext = () => {
+	// Register our risk modes (low/medium/high) into stateMeta.betModeMeta and
+	// normalise activeBetModeKey before any UI reads it (see betModes.ts).
+	initBetModes();
 	setContextEventEmitter<EmitterEvent>({ eventEmitter });
 	setContextXstate({ stateXstate, stateXstateDerived });
 	setContextLayout({ stateLayout, stateLayoutDerived });

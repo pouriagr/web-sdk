@@ -1,6 +1,6 @@
 import type { BetType } from 'rgs-requests';
 
-// Power Plinko book events — must match the math output in
+// Ember Rotor book events — must match the math output in
 // math-sdk/games/0_0_powerplinko (see games-spec/0_0_powerplinko.md).
 // A round is: one `wheel` throw, then `setTotalWin`, then `finalWin`.
 

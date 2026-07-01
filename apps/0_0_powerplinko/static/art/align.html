@@ -4,11 +4,15 @@
 <meta charset="utf-8" />
 <title>Power Plinko — alignment tool</title>
 <style>
+  html, body { height:100%; }
   body { margin:0; background:#0a0d12; color:#d7c8a8; font-family:system-ui,Segoe UI,sans-serif; }
-  .wrap { display:flex; gap:16px; padding:14px; align-items:flex-start; flex-wrap:wrap; }
-  .stage { flex:1 1 720px; min-width:360px; }
+  /* full-height row; stage and panel each scroll INDEPENDENTLY (panel no longer drags the page). */
+  .wrap { display:flex; gap:16px; padding:14px; align-items:stretch; height:100vh; box-sizing:border-box; }
+  .stage { flex:1 1 720px; min-width:360px; overflow-y:auto; padding-right:6px; }
+  .panel { width:320px; background:#12161e; border:1px solid #333; border-radius:10px; padding:12px; overflow-y:auto; }
+  .stagecap { font-size:12px; color:#8a93a6; margin:2px 2px 6px; letter-spacing:.03em; }
+  svg + .stagecap { margin-top:16px; }
   svg { width:100%; height:auto; display:block; background:#000; border-radius:8px; }
-  .panel { width:320px; background:#12161e; border:1px solid #333; border-radius:10px; padding:12px; }
   h2 { margin:14px 0 6px; font-size:14px; color:#f5d042; letter-spacing:.04em; }
   h2:first-child { margin-top:0; }
   .row { display:grid; grid-template-columns:62px 1fr 56px; gap:8px; align-items:center; margin:5px 0; font-size:12px; }
@@ -34,26 +38,67 @@
 <body>
 <div class="wrap">
   <div class="stage">
+    <div class="stagecap">BOARD — bg.png art space (1372×784): wheel · buckets · fireball · coef labels · title · balance · history</div>
     <svg id="svg" viewBox="0 0 1372 784">
       <image href="./bg.png" x="0" y="0" width="1372" height="784" />
       <image id="wheel" href="./rotor.png" />
       <image id="buckets" href="./buckets.png" />
       <g id="fbguides"></g>
       <image id="orb" class="orb" href="./orb.png" />
+      <g id="rimcut"></g>
       <g id="coefs"></g>
       <text id="section" class="section"></text>
       <g id="modes"></g>
       <g id="recent"></g>
       <g id="muteicon"></g>
+      <image id="title" href="./title.png" />
+      <text id="balance"></text>
+      <g id="history"></g>
+    </svg>
+
+    <div class="stagecap">CONTROL BAR — mainLayoutStandard wide space (1920×1080). Move − / BET / + against the locked reference buttons (RISK · DROP · AUTO · TURBO · MENU). (x,y) = centres.</div>
+    <svg id="barsvg" viewBox="0 0 1920 1080">
+      <image id="barpanel" href="./panel.png" preserveAspectRatio="none" opacity="0.85" />
+      <g id="barref"></g>
+      <g id="baredit"></g>
     </svg>
   </div>
 
   <div class="panel">
+    <h2>Bet stepper (− BET +) — bar space 1920×1080</h2>
+    <div class="row"><span>− x</span><input type="range" id="mnx_r" min="0" max="1920" /><input type="number" id="mnx_n" /></div>
+    <div class="row"><span>− y</span><input type="range" id="mny_r" min="850" max="1080" /><input type="number" id="mny_n" /></div>
+    <div class="row"><span>− size</span><input type="range" id="mns_r" min="40" max="240" /><input type="number" id="mns_n" /></div>
+    <div class="row"><span>BET x</span><input type="range" id="btx_r" min="0" max="1920" /><input type="number" id="btx_n" /></div>
+    <div class="row"><span>BET y</span><input type="range" id="bty_r" min="850" max="1080" /><input type="number" id="bty_n" /></div>
+    <div class="row"><span>BET size</span><input type="range" id="bts_r" min="14" max="72" /><input type="number" id="bts_n" /></div>
+    <div class="row"><span>+ x</span><input type="range" id="psx_r" min="0" max="1920" /><input type="number" id="psx_n" /></div>
+    <div class="row"><span>+ y</span><input type="range" id="psy_r" min="850" max="1080" /><input type="number" id="psy_n" /></div>
+    <div class="row"><span>+ size</span><input type="range" id="pss_r" min="40" max="240" /><input type="number" id="pss_n" /></div>
+
     <h2>Wheel</h2>
     <div class="row"><span>x</span><input type="range" id="wx_r" min="0" max="700" /><input type="number" id="wx_n" /></div>
     <div class="row"><span>y</span><input type="range" id="wy_r" min="0" max="700" /><input type="number" id="wy_n" /></div>
     <div class="row"><span>size</span><input type="range" id="ws_r" min="120" max="500" /><input type="number" id="ws_n" /></div>
     <label class="chk"><input type="checkbox" id="spin" checked /> spin the wheel</label>
+
+    <h2>Title (logo)</h2>
+    <div class="row"><span>x</span><input type="range" id="tx_r" min="0" max="1372" /><input type="number" id="tx_n" /></div>
+    <div class="row"><span>y</span><input type="range" id="ty_r" min="0" max="784" /><input type="number" id="ty_n" /></div>
+    <div class="row"><span>width</span><input type="range" id="tw_r" min="100" max="1300" /><input type="number" id="tw_n" /></div>
+    <div class="row"><span>height</span><input type="range" id="th_r" min="20" max="320" /><input type="number" id="th_n" /></div>
+
+    <h2>Balance (on board)</h2>
+    <div class="row"><span>x</span><input type="range" id="blx_r" min="0" max="1372" /><input type="number" id="blx_n" /></div>
+    <div class="row"><span>y</span><input type="range" id="bly_r" min="0" max="784" /><input type="number" id="bly_n" /></div>
+    <div class="row"><span>font</span><input type="range" id="blf_r" min="12" max="64" /><input type="number" id="blf_n" /></div>
+
+    <h2>Play history (last 10)</h2>
+    <div class="row"><span>x</span><input type="range" id="hx_r" min="0" max="1372" /><input type="number" id="hx_n" /></div>
+    <div class="row"><span>y</span><input type="range" id="hy_r" min="0" max="784" /><input type="number" id="hy_n" /></div>
+    <div class="row"><span>pill w</span><input type="range" id="hpw_r" min="30" max="140" /><input type="number" id="hpw_n" /></div>
+    <div class="row"><span>pill h</span><input type="range" id="hph_r" min="18" max="80" /><input type="number" id="hph_n" /></div>
+    <div class="row"><span>gap</span><input type="range" id="hgap_r" min="0" max="40" /><input type="number" id="hgap_n" /></div>
 
     <h2>Fireball</h2>
     <div class="row"><span>start x</span><input type="range" id="fx_r" min="0" max="1372" /><input type="number" id="fx_n" /></div>
@@ -63,6 +108,12 @@
     <div class="row"><span>launch y</span><input type="range" id="fly_r" min="0" max="784" /><input type="number" id="fly_n" /></div>
     <div class="row"><span>track y</span><input type="range" id="ftk_r" min="400" max="740" /><input type="number" id="ftk_n" /></div>
     <div class="row"><span>land y</span><input type="range" id="fld_r" min="400" max="784" /><input type="number" id="fld_n" /></div>
+
+    <h2>Rim cut (orb settles in cup)</h2>
+    <label class="chk"><input type="checkbox" id="rimprev" checked /> preview the curved cut</label>
+    <div class="row"><span>clip y</span><input type="range" id="rcy_r" min="540" max="620" /><input type="number" id="rcy_n" /></div>
+    <div class="row"><span>curve</span><input type="range" id="rcv_r" min="0" max="48" /><input type="number" id="rcv_n" /></div>
+    <div class="row"><span>preview bk</span><input type="range" id="rband_r" min="0" max="8" /><input type="number" id="rband_n" /></div>
 
     <h2>Buckets image</h2>
     <div class="row"><span>x</span><input type="range" id="bx_r" min="0" max="900" /><input type="number" id="bx_n" /></div>
@@ -106,18 +157,29 @@
   const MODES = [['Low','max 25x'],['Medium','max 5000x'],['High','max 5000x']];
   const SEL = 1; // medium highlighted, for preview
 
-  // defaults = current Game.svelte values
+  // defaults = first-pass fit to the new (2026-06-29) bg.png art. NOTE: the Pixi board now
+  // takes the WHEEL as a CENTRE point + size — this tool still uses image top-left x/y, so read
+  // WHEEL_CX / WHEEL_CY from the output for Board.svelte's WHEEL.x / WHEEL.y (size = w/h).
+  // The "Recent plays", "Mute icon" and right-side "Game-mode list" sections below are OBSOLETE
+  // for the Pixi board (sound is in the framework UI bar; the risk selector is now top-left) —
+  // ignore them. Only Wheel / Fireball / Buckets / Coefficient labels matter now.
   const state = {
-    wx:87, wy:223, ws:329, spin:true,
-    fx:638, fy:173, fr:26, flx:249, fly:387, ftk:556, fld:580,
+    // bet stepper (ControlBar.svelte, wide layout): (x,y)=CENTRES in 1920×1080, riskY=1080-96=984.
+    mnx:360, mny:984, mns:104, btx:560, bty:984, bts:30, psx:720, psy:984, pss:104,
+    wx:106, wy:175, ws:314, spin:true,
+    tx:81, ty:0, tw:269, th:32,
+    blx:1097, bly:18, blf:23,
+    hx:412, hy:766, hpw:72, hph:31, hgap:6,
+    fx:832, fy:76, fr:46, flx:263, fly:332, ftk:551, fld:576,
+    rcy:576, rcv:16, rband:4, rimprev:true,
     rpx:1128, rpy:146, mutx:48, muty:716,
-    bx:340, by:536, bw:715, bh:151,
-    cy:655, cpy:636, cpw:53, cph:28, cfs:15,
+    bx:458, by:517, bw:761, bh:162,
+    cy:609, cpy:590, cpw:54, cph:26, cfs:15,
     mx:1128, msy:609, my:637, mw:202, mh:34, mg:11, mlf:14, mhf:13,
   };
 
   const $ = (id) => document.getElementById(id);
-  const svg = $('svg'), wheel = $('wheel'), buckets = $('buckets'), orb = $('orb');
+  const svg = $('svg'), wheel = $('wheel'), buckets = $('buckets'), orb = $('orb'), title = $('title');
   const out = $('out');
   const bandCx = (b) => state.bx + ((b + 0.5) / TOTAL) * state.bw;
 
@@ -132,6 +194,32 @@
     buckets.setAttribute('x', state.bx); buckets.setAttribute('y', state.by);
     buckets.setAttribute('width', state.bw); buckets.setAttribute('height', state.bh);
 
+    // title (logo)
+    title.setAttribute('x', state.tx); title.setAttribute('y', state.ty);
+    title.setAttribute('width', state.tw); title.setAttribute('height', state.th);
+
+    // balance (on board, single line)
+    const bal = $('balance');
+    bal.setAttribute('x', state.blx); bal.setAttribute('y', state.bly);
+    bal.setAttribute('text-anchor', 'middle');
+    bal.setAttribute('dominant-baseline', 'middle');
+    bal.setAttribute('style', `fill:#ffd34d;font-weight:700;font-size:${state.blf}px`);
+    bal.textContent = 'BALANCE  $0.00';
+
+    // play history (last 10) — caption + sample pills, win/loss tinted
+    const hSamples = [25, 0, 1.5, 0.5, 3, 0, 100];
+    const hskin = (m) => m > 1 ? { f:'#2a2410', b:'#f5d042', t:'#ffd34d' }
+      : m < 1 ? { f:'#1a1416', b:'#5a4246', t:'#9a8a8e' }
+      : { f:'#1a2030', b:'#3a4252', t:'#c7cedb' };
+    let hh = '';
+    for (let i = 0; i < hSamples.length; i++) {
+      const px = state.hx + i * (state.hpw + state.hgap) + state.hpw/2;
+      const s = hskin(hSamples[i]);
+      hh += `<rect x="${px - state.hpw/2}" y="${state.hy - state.hph/2}" width="${state.hpw}" height="${state.hph}" rx="7" style="fill:${s.f};stroke:${s.b};stroke-width:1.5;opacity:.92"/>`;
+      hh += `<text x="${px}" y="${state.hy}" text-anchor="middle" dominant-baseline="middle" style="fill:${s.t};font-size:14px;font-weight:700">${hSamples[i]}x</text>`;
+    }
+    $('history').innerHTML = hh;
+
     // fireball start + flight guide lines
     orb.style.display = '';
     orb.setAttribute('x', state.fx - state.fr); orb.setAttribute('y', state.fy - state.fr);
@@ -144,6 +232,24 @@
       `<circle cx="${lpx}" cy="${lpy}" r="9" fill="none" stroke="#5ad1ff" stroke-width="2"/>` +
       `<line x1="${lpx - 16}" x2="${lpx + 16}" y1="${lpy}" y2="${lpy}" stroke="#5ad1ff" stroke-width="1.5"/>` +
       `<line x1="${lpx}" x2="${lpx}" y1="${lpy - 16}" y2="${lpy + 16}" stroke="#5ad1ff" stroke-width="1.5"/>`;
+
+    // rim cut preview: a resting orb in bucket `rband`, occluded by the cauldron's curved
+    // front rim (mirrors Board.svelte's Graphics mask). Faint orb = whole ball; bright = the
+    // visible part above the green arc; everything below the arc is hidden behind the rim.
+    const rc = $('rimcut');
+    if (state.rimprev) {
+      const rcx = bandCx(state.rband), rcyc = state.fld, rfr = state.fr;
+      const halfW = rfr + 8, sideY = state.rcy - state.rcv, ctrlY = state.rcy + state.rcv;
+      const clipD = `M ${rcx - halfW} 0 L ${rcx + halfW} 0 L ${rcx + halfW} ${sideY} Q ${rcx} ${ctrlY} ${rcx - halfW} ${sideY} Z`;
+      const arcD = `M ${rcx + halfW} ${sideY} Q ${rcx} ${ctrlY} ${rcx - halfW} ${sideY}`;
+      rc.innerHTML =
+        `<defs><clipPath id="rimclip" clipPathUnits="userSpaceOnUse"><path d="${clipD}"/></clipPath></defs>` +
+        `<image href="./orb.png" x="${rcx - rfr}" y="${rcyc - rfr}" width="${rfr * 2}" height="${rfr * 2}" opacity="0.18"/>` +
+        `<image class="orb" href="./orb.png" x="${rcx - rfr}" y="${rcyc - rfr}" width="${rfr * 2}" height="${rfr * 2}" clip-path="url(#rimclip)"/>` +
+        `<path d="${arcD}" fill="none" stroke="#9fe0a0" stroke-width="2"/>`;
+    } else {
+      rc.innerHTML = '';
+    }
 
     // coefficient labels (pills + text), 9 across the bucket strip
     let g = '';
@@ -182,11 +288,54 @@
     $('muteicon').setAttribute('transform', `translate(${state.mutx} ${state.muty}) scale(1.5)`);
     $('muteicon').innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="#c7cedb"/>';
 
+    // ===== CONTROL BAR stage (1920×1080 = mainLayoutStandard wide) =====
+    // Forge-bar background (panel.png), decorative — bottom-aligned, full width.
+    const barpanel = $('barpanel');
+    barpanel.setAttribute('x', 0); barpanel.setAttribute('y', 1080 - 300);
+    barpanel.setAttribute('width', 1920); barpanel.setAttribute('height', 300);
+
+    // a button helper. (x,y)=CENTRE (ForgeButton anchors 0.5). dim=locked reference.
+    const drawBtn = (x, y, w, h, label, fs, fill, border, text, dim) => {
+      const rx = Math.min(w, h) * 0.22, op = dim ? 0.5 : 1;
+      return `<rect x="${x - w/2}" y="${y - h/2}" width="${w}" height="${h}" rx="${rx}" style="fill:${fill};stroke:${border};stroke-width:${dim?1.5:2.5};opacity:${op*0.92}"/>`
+        + `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" style="fill:${text};font-weight:700;letter-spacing:1px;font-size:${fs}px;opacity:${op}">${label}</text>`;
+    };
+
+    // locked REFERENCE buttons at their real ControlBar wide coords (riskY=984).
+    const REF = [
+      ['RISK', 175, 984, 160, 96, 30, '#7a3f0a', '#f5a042', '#ffdcab'], // medium tone
+      ['DROP', 960, 984, 320, 132, 42, '#e2500e', '#ffc24d', '#fff4e0'], // hero
+      ['AUTO', 1250, 984, 160, 96, 30, '#1a2030', '#3a4252', '#c7cedb'],
+      ['TURBO', 1420, 984, 160, 96, 28, '#1a2030', '#3a4252', '#c7cedb'],
+      ['MENU', 1590, 984, 160, 96, 30, '#1a2030', '#3a4252', '#c7cedb'],
+    ];
+    $('barref').innerHTML = REF.map(b => drawBtn(b[1], b[2], b[3], b[4], b[0], b[5], b[6], b[7], b[8], true)).join('');
+
+    // EDITABLE − / BET / + (bright). Buttons keep ControlBar's 104:88 ratio as "size" scales;
+    // glyph fonts keep ControlBar's ratios (−=48/104, +=44/104). BET = two-line moneyLabel.
+    const stepH = (size) => Math.round(size * 88 / 104);
+    const capFs = Math.round(state.bts * 18 / 30);
+    const capDy = Math.round(state.bts * 16 / 30), valDy = Math.round(state.bts * 14 / 30);
+    $('baredit').innerHTML =
+      drawBtn(state.mnx, state.mny, state.mns, stepH(state.mns), '−', Math.round(state.mns*48/104), '#1a2030', '#f5d042', '#ffd34d', false) +
+      drawBtn(state.psx, state.psy, state.pss, stepH(state.pss), '+', Math.round(state.pss*44/104), '#1a2030', '#f5d042', '#ffd34d', false) +
+      `<text x="${state.btx}" y="${state.bty - capDy}" text-anchor="middle" dominant-baseline="central" style="fill:#8a93a6;font-weight:700;letter-spacing:1px;font-size:${capFs}px">BET</text>` +
+      `<text x="${state.btx}" y="${state.bty + valDy}" text-anchor="middle" dominant-baseline="central" style="fill:#fff;font-weight:700;font-size:${state.bts}px">$1.00</text>`;
+
     out.textContent =
+      `BET STEPPER  (ControlBar.svelte wide branch; bar space 1920×1080; (x,y)=CENTRES; row y=riskY=L.height-96=984)\n` +
+      `  −  x={${state.mnx}} y={${state.mny}} width={${state.mns}} height={${Math.round(state.mns*88/104)}} fontSize={${Math.round(state.mns*48/104)}}\n` +
+      `  +  x={${state.psx}} y={${state.psy}} width={${state.pss}} height={${Math.round(state.pss*88/104)}} fontSize={${Math.round(state.pss*44/104)}}\n` +
+      `  BET moneyLabel(lx=${state.btx}, ly=${state.bty}): caption fontSize ${capFs} @ ly-${capDy} ; value fontSize ${state.bts} @ ly+${valDy}\n` +
+      `  reference (locked): RISK x=175 · DROP x=960 · AUTO x=1250 · TURBO x=1420 · MENU x=1590  (all y=984)\n\n` +
       `WHEEL  image x="${state.wx}" y="${state.wy}" w/h="${state.ws}"\n` +
       `  WHEEL_CX=${Math.round(ox)} WHEEL_CY=${Math.round(oy)}  transform-origin:${ox}px ${oy}px\n\n` +
+      `TITLE  x=${state.tx} y=${state.ty} width=${state.tw} height=${state.th}\n\n` +
+      `BALANCE  x=${state.blx} y=${state.bly} fontSize=${state.blf}  (BalanceLabel.svelte BALANCE)\n\n` +
+      `HISTORY  x=${state.hx} y=${state.hy} pillWidth=${state.hpw} pillHeight=${state.hph} gap=${state.hgap}  (HistoryStrip.svelte props)\n\n` +
       `FIREBALL  START_X=${state.fx} START_Y=${state.fy} BALL_R=${state.fr}\n` +
       `  LAUNCH_X=${state.flx} LAUNCH_Y=${state.fly} TRACK_Y=${state.ftk} LAND_Y=${state.fld}\n\n` +
+      `RIM CUT  RIM_CLIP_Y=${state.rcy} RIM_CURVE=${state.rcv}  (Board.svelte; curved cut, deepest at centre, +${state.rcv}px rise to the sides)\n\n` +
       `BUCKETS image x="${state.bx}" y="${state.by}" w="${state.bw}" h="${state.bh}"\n` +
       `  BK_X0=${state.bx} BK_W=${state.bw}\n\n` +
       `COEF LABELS  (bandX(b)=${state.bx}+((b+0.5)/9)*${state.bw})\n` +
@@ -207,9 +356,10 @@
     r.addEventListener('input', e => upd(e.target.value));
     n.addEventListener('input', e => upd(e.target.value));
   }
-  ['wx','wy','ws','fx','fy','fr','flx','fly','ftk','fld','rpx','rpy','mutx','muty','bx','by','bw','bh','cy','cpy','cpw','cph','cfs','mx','msy','my','mw','mh','mg','mlf','mhf']
+  ['mnx','mny','mns','btx','bty','bts','psx','psy','pss','wx','wy','ws','tx','ty','tw','th','blx','bly','blf','hx','hy','hpw','hph','hgap','fx','fy','fr','flx','fly','ftk','fld','rcy','rcv','rband','rpx','rpy','mutx','muty','bx','by','bw','bh','cy','cpy','cpw','cph','cfs','mx','msy','my','mw','mh','mg','mlf','mhf']
     .forEach(k => bind(k, k+'_r', k+'_n'));
   $('spin').addEventListener('change', e => { state.spin = e.target.checked; render(); });
+  $('rimprev').addEventListener('change', e => { state.rimprev = e.target.checked; render(); });
   render();
 </script>
 </body>

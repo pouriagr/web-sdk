@@ -2,12 +2,19 @@
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
 	const { Story } = defineMeta({
-		title: 'PowerPlinko/Wheel',
+		title: 'EmberRotor/Game',
 	});
 </script>
 
 <script lang="ts">
+	import {
+		StoryGameTemplate,
+		StoryLocale,
+		type TemplateArgs,
+		templateArgs,
+	} from 'components-storybook';
 	import { randomInteger } from 'utils-shared/random';
+	import { stateBet, stateConfig } from 'state-shared';
 
 	import Game from '../components/Game.svelte';
 	import { setContext } from '../game/context';
@@ -17,10 +24,16 @@
 
 	setContext();
 
-	// Build one complete round (book) for a risk mode + landing band, then play it
-	// straight through playBet (no RGS) — the Game animates it. The coefficients and
-	// odds MIRROR the math (game_config.distance_bands_by_mode); the Game re-derives
-	// the win from `multiplier`, so `amount` is only there for event-shape fidelity.
+	// Storybook has no RGS, so seed bet levels + a starting bet so the control bar's
+	// −/BET/+ stepper and RISK selector are interactive in the preview. (Real bet levels
+	// come from the RGS config via Authenticate on the live platform.)
+	stateConfig.betAmountOptions = [0.2, 0.4, 1, 2, 5, 10, 20, 50, 100, 200];
+	stateBet.betAmount = 1;
+
+	// NOTE: in Storybook the DROP button is intentionally inert/greyed — it needs a live
+	// RGS to fetch an outcome. To preview a round here, pick the risk level in the control
+	// bar, then click the green "Action" button (top-left) to play a mock book through
+	// playBet. The coefficients/odds MIRROR the math (game_config.distance_bands_by_mode).
 	const buildBook = (modeKey: string, band: number) => {
 		const multiplier = getMode(modeKey).multipliers[band];
 		const amount = Math.round(multiplier * 100);
@@ -28,6 +41,7 @@
 			{
 				index: 0,
 				type: 'wheel',
+				mode: modeKey,
 				band,
 				totalBands: TOTAL_BANDS,
 				distance: Math.round((band / (TOTAL_BANDS - 1)) * 1e4) / 1e4,
@@ -39,10 +53,9 @@
 		return { id: 0, payoutMultiplier: amount, events };
 	};
 
-	const play = (book: ReturnType<typeof buildBook>) =>
-		playBet({ ...book, state: book.events });
+	const play = (book: ReturnType<typeof buildBook>) => playBet({ ...book, state: book.events });
 
-	// Weighted-random landing band reproducing the mode's true on-platform odds.
+	// Weighted-random landing band reproducing the active mode's true on-platform odds.
 	const weightedBand = (modeKey: string) => {
 		const w = getMode(modeKey).weights;
 		const total = w.reduce((a, b) => a + b, 0);
@@ -54,18 +67,34 @@
 		return 0;
 	};
 
-	// onDrop is called with the in-game selected risk mode (the RISK MODE selector
-	// under Recent Plays). Each DROP plays a real-odds book for that mode.
-	const playRealOdds = (modeKey: string) => play(buildBook(modeKey, weightedBand(modeKey)));
-	const playTopBand = (modeKey: string) => play(buildBook(modeKey, TOTAL_BANDS - 1));
+	const playRealOdds = () =>
+		play(buildBook(stateBet.activeBetModeKey, weightedBand(stateBet.activeBetModeKey)));
+	const playTopBand = () => play(buildBook(stateBet.activeBetModeKey, TOTAL_BANDS - 1));
 </script>
 
-<!-- Pick the risk level in-game (RISK MODE list), set Bet + Balls, then DROP. -->
-<Story name="play">
-	<Game onDrop={playRealOdds} />
-</Story>
+{#snippet template(args: TemplateArgs<any>)}
+	<StoryGameTemplate
+		skipLoadingScreen={args.skipLoadingScreen}
+		action={async () => {
+			await args.action?.(args.data);
+		}}
+	>
+		<StoryLocale lang="en">
+			<Game />
+		</StoryLocale>
+	</StoryGameTemplate>
+{/snippet}
+
+<!-- Real on-platform odds for the selected risk mode. -->
+<Story
+	name="real odds (stake)"
+	args={templateArgs({ skipLoadingScreen: true, data: {}, action: playRealOdds })}
+	{template}
+/>
 
 <!-- Forces the farthest/top bucket of the selected mode (debug the big-win path). -->
-<Story name="top band (jackpot)">
-	<Game onDrop={playTopBand} />
-</Story>
+<Story
+	name="top band (jackpot)"
+	args={templateArgs({ skipLoadingScreen: true, data: {}, action: playTopBand })}
+	{template}
+/>

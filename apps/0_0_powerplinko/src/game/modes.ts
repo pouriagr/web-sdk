@@ -1,4 +1,4 @@
-// Power Plinko risk modes. These MIRROR the math source of truth in
+// Ember Rotor risk modes. These MIRROR the math source of truth in
 // math-sdk/games/0_0_powerplinko/game_config.py (distance_bands_by_mode):
 // `multipliers[b]` is the payout for landing band b, `weights[b]` is that band's
 // count out of 100,000 sims. Every mode is RTP 0.96 exactly; higher risk = more

@@ -15,7 +15,11 @@
 #      static files never "time out loading".
 #   4. `storybook build` does not exit after finishing (a known hang). We watch its log
 #      for completion, then kill it + any orphaned storybook node procs (which otherwise
-#      pile up and eat RAM/CPU).
+#      pile up and eat RAM/CPU). IMPORTANT: wait for the FINAL "Output directory" line,
+#      NOT the first "built in" - Storybook builds the manager first ("Manager built in
+#      ...") then the preview; breaking on "built in" kills the job before the preview
+#      bundle (iframe.html) is written, leaving an incomplete build that loads the manager
+#      but sticks forever on the story spinner (iframe.html -> 404).
 #   NOTE: do NOT accept Storybook's "upgrade to v10" prompt - this workspace is pinned to
 #   v9.0.15; upgrading just this app re-breaks the preview.
 
@@ -39,10 +43,12 @@ $job = Start-Job -ScriptBlock {
   & ".\node_modules\.bin\storybook.CMD" build -o storybook-static 2>&1
 }
 $failed = $false
-for ($i = 0; $i -lt 150; $i++) {
+for ($i = 0; $i -lt 210; $i++) {
   Start-Sleep -Seconds 2
   $o = Receive-Job $job -Keep | Out-String
-  if ($o -match "built in") { break }
+  # Wait for the FINAL line (after BOTH manager + preview bundles). Do NOT break on
+  # "built in" - that matches the manager build and kills the preview bundle early.
+  if ($o -match "Output directory") { break }
   if ($o -match "Build failed|error during build") { $failed = $true; break }
   if ($job.State -ne "Running") { break }
 }
@@ -60,5 +66,9 @@ if ($failed -or -not (Test-Path "storybook-static\index.html")) {
 }
 
 # 3) serve the pre-built static site (no on-demand compile -> never times out)
+# Reset to Continue: python's http.server logs each request to stderr; under
+# ErrorActionPreference=Stop a piped/merged stderr line becomes a terminating
+# NativeCommandError and kills the server on the first request.
+$ErrorActionPreference = "Continue"
 Write-Host "Build complete. Serving http://localhost:$port  -  Ctrl+C to stop." -ForegroundColor Green
 python -m http.server $port --directory storybook-static

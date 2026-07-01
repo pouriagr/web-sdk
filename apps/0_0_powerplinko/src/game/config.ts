@@ -4,7 +4,7 @@
 // ("name"), the math configs, and the launch env. Identity scalars corrected for hygiene.
 export default {
 	providerName: 'sample_provider',
-	gameName: 'power_plinko',
+	gameName: 'ember_rotor',
 	gameID: '0_0_powerplinko',
 	rtp: 0.96,
 	numReels: 5,

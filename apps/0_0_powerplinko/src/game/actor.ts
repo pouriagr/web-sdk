@@ -1,32 +1,30 @@
-import _ from 'lodash';
-
 import { stateBet } from 'state-shared';
-import { checkIsMultipleRevealEvents } from 'utils-book';
 import { createPrimaryMachines, createIntermediateMachines, createGameActor } from 'utils-xstate';
 
 import type { Bet } from './typesBookEvent';
 import { stateXstateDerived } from './stateXstate';
-import { playBet, convertTorResumableBet } from './utils';
-import { stateGameDerived } from './stateGame.svelte';
+import { playBet } from './utils';
 
+// Ember Rotor is a single-outcome wheel game — no reels/board to spin or settle, so
+// the game-actor hooks are minimal: reset the win, request the bet, play the book
+// (which drives the wheel/ball animation via the `wheel` event). The slot-style reel
+// scaffolding the number-picker template carried is NOT used here.
 const primaryMachines = createPrimaryMachines<Bet>({
-	onResumeGameActive: (betToResume) => convertTorResumableBet(betToResume),
-	onResumeGameInactive: (betToResume) => {
-		const lastRevealEvent = _.findLast(
-			betToResume.state,
-			(emitterEvent) => emitterEvent?.type === 'reveal',
-		);
-
-		if (lastRevealEvent) stateGameDerived.enhancedBoard.settle(lastRevealEvent.board);
+	// Replay / active-resume: a round is atomic (wheel → setTotalWin → finalWin), so just
+	// play the full recorded book — playBet animates the throw and settles the win. (No
+	// bonus mid-round state to snapshot, so the template's convertTorResumableBet is N/A.)
+	onResumeGameActive: (betToResume) => betToResume,
+	onResumeGameInactive: () => {
+		// Reconnect to an already-resolved round: balance is settled server-side and there
+		// is no board state to restore, so nothing to render (round just returns to idle).
 	},
 	onNewGameStart: async () => {
 		if ((stateBet.isTurbo && stateXstateDerived.isAutoBetting()) || stateBet.isSpaceHold) return;
 		stateBet.winBookEventAmount = 0;
-		await stateGameDerived.enhancedBoard.preSpin({});
 	},
-	onNewGameError: () => stateGameDerived.enhancedBoard.settle(),
+	onNewGameError: () => {},
 	onPlayGame: async (bet) => await playBet(bet),
-	checkIsBonusGame: (bet) => checkIsMultipleRevealEvents({ bookEvents: bet.state }),
+	checkIsBonusGame: () => false,
 });
 
 const intermediateMachines = createIntermediateMachines(primaryMachines);

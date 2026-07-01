@@ -10,6 +10,10 @@ export type MusicName =
 	| 'bgm_winlevel_superwin';
 
 export type SoundEffectName =
+	// Ember Rotor's own SFX. (The names below this are leftover slot-template entries kept
+	// only for type compatibility with vestigial stateGame scaffolding — nothing subscribes
+	// to them; see Sound.svelte, which listens only to `soundWin`.)
+	| 'sfx_win'
 	| 'jng_intro_fs'
 	| 'sfx_anticipation'
 	| 'sfx_anticipation_start'
